@@ -1,3 +1,16 @@
+x01 <- rnorm(100, mean=20, sd=10)
+
+x02 <- rnorm(100, mean=20, sd=50)
+
+hist(x01)
+
+hist(x02)
+
+t.test(x01, conf.level=0.99, mu=22)
+
+t.test(x02, conf.level=0.99, mu=22)
+
+
 #-------------Hypothesis testing for the mean-------------
 
 #case 1: two samples from the same population N(10, 100)
