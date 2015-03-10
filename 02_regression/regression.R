@@ -4,6 +4,12 @@ linear.1 <- lm(rating ~ complaints + privileges + learning + raises + critical, 
 
 summary(linear.1)
 
+plot(linear.1)
+
+
+linear.2 <- lm(rating ~ complaints, data=attitude)
+
+summary(linear.2)
 
 #Assesing the normality of residuals for the linear model defined in example~\ref{ex:attitude}
 
@@ -13,6 +19,10 @@ plot(linear.1, which=2)
 hist(resid(linear.1), main=NULL)
 dev.off()
 
+pdf("resnorm2.pdf")
+par(mfrow=c(2,2), mar=c(2,2,2,2))
+plot(linear.2)
+dev.off()
 
 #Assessing homoscedasticity for the linear model defined in example~\ref{ex:attitude}
 
@@ -62,11 +72,23 @@ bgtest(modelCH)
 
 #Assessing multicollinearity issues in a regression model
 
-mod04 <- lm(Employed ~ GNP + Unemployed + Armed.Forces + Population + Year, data=longley, x= TRUE)
+mod04 <- lm(Employed ~ GNP.deflator + GNP + Unemployed + Armed.Forces + Population + Year, data=longley, x= TRUE)
+
+summary(mod04)
+
+cor(longley)
 
 library(HH)
 
 vif(mod04, y.name = "Employed")
+
+mod04c <- lm(Employed ~ GNP, data=longley, x= TRUE)
+
+summary(mod04b)
+
+mod04c <- lm(Armed.Forces ~ Unemployed + Population, data=longley, x= TRUE)
+
+summary(mod04c)
 
 #Categorical variables in the \verb|hsb2| dataset
 
@@ -74,7 +96,15 @@ hsb2 <- read.csv("http://www.ats.ucla.edu/stat/data/hsb2.csv")
 
 hsb2$race.f <- factor(hsb2$race)
 
+levels(hsb2$race.f) <- c("hispanic", "asian", "african-amer", "white")
+
+hsb2$female.f <- factor(hsb2$female)
+
+levels(hsb2$female.f) <- c("male", "female")
+
 summary(lm(write ~ race.f, data = hsb2))
+
+summary(lm(write ~ female.f, data = hsb2))
 
 #A hierarchical regression model
 
