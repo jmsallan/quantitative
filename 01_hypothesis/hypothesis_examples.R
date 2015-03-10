@@ -1,5 +1,4 @@
 x01 <- rnorm(100, mean=20, sd=10)
-
 x02 <- rnorm(100, mean=20, sd=50)
 
 hist(x01)

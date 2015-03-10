@@ -8,7 +8,7 @@ summary(linear.1)
 #Assesing the normality of residuals for the linear model defined in example~\ref{ex:attitude}
 
 jpeg("resnorm.jpg")
-par(mfrow=c(2,1), pty="m")
+par(mfrow=c(2,1), mar=c(2,2,2,2))
 plot(linear.1, which=2)
 hist(resid(linear.1), main=NULL)
 dev.off()
@@ -32,6 +32,7 @@ bptest(linear.1)
     
 ## generate heteroskedastic (err1) 
 ##and homoskedastic (err2) disturbances
+set.seed(1)
 err1 <- rnorm(150, sd=rep(c(1,2,4), 50))
 err2 <- rnorm(150)
 
