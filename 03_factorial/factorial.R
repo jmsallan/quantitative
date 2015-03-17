@@ -17,14 +17,23 @@ eigen(scores.cor)$values
 
 principal.scores <- principal(r=scores.cor, nfactors=2, rotate="none")
 
+principal.scores.varimax <- principal(r=scores.cor, nfactors=2)
+print(principal.scores.varimax, cut=0.4)
+
 #example 2: Factor analysis of a matrix of student scores
 
 paxis.scores <- fa(r=scores.cor, nfactors=2, fm="pa", rotate="none")
+paxis.scores.varimax <- fa(r=scores.cor, nfactors=2, fm="pa")
+print(paxis.scores.varimax, cut=0.4)
+
 ml.scores <- fa(r=scores.cor, nfactors=2, fm="ml", rotate="none")
+ml.scores.varimax <- fa(r=scores.cor, nfactors=2, fm="ml")
+print(ml.scores.varimax, cut=0.4)
 
 #example 3: The rotated factor loadings of a matrix of student scores
 
 ml.scores.oblimin <- fa(r=scores.cor, nfactors=2, fm="ml", rotate="oblimin")
+print(ml.scores.oblimin, cut=0.4)
 
 #analysis of the bfi dataset
 
@@ -42,7 +51,11 @@ jpeg("parallelbfi.jpg")
 fa.parallel(cor.bfi.items, n.obs=2800)
 dev.off()
 
+principal.bfi <-  principal(r=cor.bfi.items, nfactors=6)
+print(principal.bfi.oblimin, cut=0.4)
+
 pa.bfi.oblimin <- fa(r=cor.bfi.items, nfactors=5, fm="pa", rotate="oblimin")
+print(pa.bfi.oblimin, cut=0.4)
 
 #example 4: confirmatory factor analysis
 
