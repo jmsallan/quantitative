@@ -1,0 +1,81 @@
+---
+title: "Testing difference of means in R"
+output:
+  word_document: default
+  html_document: default
+---
+
+Let's see how can we test the null hypothesis of equality of means in R. We can distinguish two cases:
+
+* **paired data** we test for equality of means of two measurements of the same variable in the same sample. In this sample, we can track both measures for the same individual. An example of paired data is taking some measurement (e.g., blood pressure) on a set of individuals before and after tracking a drug.
+
+* **non-paired data** we test for equality of means of two independent samples. An example of non-paired data are the scores on student's scores on two different school groups.
+
+##Paired data
+
+Let's simulate a situation of **paired data**: the heart rate on a set of individuals before and after a short run. Before running heart rate is between 50 and 70, and after running is between 60 and 90.
+
+```{r}
+set.seed(1212)
+before <- runif(100, 50, 70)
+after <- runif(100, 60, 90)
+```
+
+We pack the observations in a data frame. The `measurement` variable is the value of heart rate for each observation, and `moment` is a variable indicating when the measurement has taken place. Both variables are listed in the same order, as indicated by the `id` variable.
+
+```{r}
+measure <- c(before, after)
+moment <- c(rep("before", 100), rep("after", 100))
+id <- rep(1:100, 2)
+
+sample <- data.frame(id, measure, moment)
+head(sample) #first observations
+tail(sample) #last observations
+```
+
+With data structured in this way, we can proceed to perform the test doing:
+
+```{r}
+t.test(sample$measure ~ sample$moment, paired=TRUE)
+```
+
+The results show that we can discard the mull hypothesis, and conclude with a reasonable level of certainty that heart rate increases after running.
+
+##Non-paired data
+
+Let's simulate student's scores in two classes: class 1 and class 2:
+
+```{r}
+set.seed(1313)
+class1 <- runif(80, 4, 6)
+class2 <- runif(60, 3, 9)
+
+print(class1, digits=2)
+print(class2, digits=2)
+```
+
+We want to test the difference of means for **non-paired data**, as students are different in each class. Note that now we have entered both samples independently, and that the `paired` variable is set to its default value, which is `FALSE`.
+
+```{r}
+t.test(class1, class2)
+```
+
+In this case, we can see that **we can reject the null hypothesis**, as the p-value is inferior to 0.05.
+
+Let's see now two other classes:
+
+```{r}
+class3 <- runif(90, 4, 7)
+class4 <- runif(70, 4, 7)
+
+print(class3, digits=2)
+print(class4, digits=2)
+```
+
+We can procded now to make the hypothesis testing:
+
+```{r}
+t.test(class3, class4)
+```
+
+In this case, as the p-value is above 0.05, **we cannot discard the null hypothesis** of equality of means. In this particular case, as we have performed a simulation, we know that poblational means for `class3` and `class4` are equal.

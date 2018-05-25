@@ -1,0 +1,177 @@
+---
+title: "Caso práctico SEM"
+author: "Jose M Sallan"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Para resolver el caso práctico, primero cargamos los datos
+
+```{r datos}
+datos <- read.csv("datascale.csv")
+```
+
+#CFA de compromiso organizativo
+
+Definimos los tres modelos que se requieren:
+
+* `onefactor` modelo con un factor
+* `three factor` modelo con dos factores
+* `fourfactors` modelo con cuatro factores
+
+```{r modelos}
+onefactor <- 'factor =~ ac01 + ac02 + ac03 + ac04 + ac05 + ac06 + cch01 + cch02 + cch03 + cch04 + cch05 + cch06 + ccl01 + ccl02 + ccl03 + nc01 + nc02 + nc03 + nc04 + nc05 + nc06'
+
+threefactor <- 'ac =~ ac01 + ac02 + ac03 + ac04 + ac05 + ac06
+cc =~ cch01 + cch02 + cch03 + cch04 + cch05 + cch06 + ccl01 + ccl02 + ccl03
+nc =~ nc01 + nc02 + nc03 + nc04 + nc05 + nc06'
+
+fourfactor <- 'ac =~ ac01 + ac02 + ac03 + ac04 + ac05 + ac06
+cch =~ cch01 + cch02 + cch03 + cch04 + cch05 + cch06
+ccl =~ccl01 + ccl02 + ccl03
+nc =~ nc01 + nc02 + nc03 + nc04 + nc05 + nc06'
+```
+
+Ahora usamos `lavaan` para evaluar el ajuste de cada uno de los modelos a los datos:
+
+```{r ajuste modelos, message=FALSE}
+library(lavaan)
+
+onefactor.fit <- cfa(onefactor, data = datos, likelihood="wishart")
+threefactor.fit <- cfa(threefactor, data = datos, likelihood="wishart")
+fourfactor.fit <- cfa(fourfactor, data = datos, likelihood="wishart")
+```
+
+Seleccionamos algunos índices de ajuste a mostrar:
+
+```{r ajuste oc}
+ind <- c(3, 4, 10, 23, 38)
+fitMeasures(onefactor.fit)[ind]
+fitMeasures(threefactor.fit)[ind]
+fitMeasures(fourfactor.fit)[ind]
+```
+
+En este caso, el moodelo que tiene mejor ajuste es el de cuatro factores, aunque su ajuste no sea demasiado bueno. Veamos los estimadores de parámetros para este modelo:
+
+```{r parametros cuatro factores}
+parameterEstimates(fourfactor.fit)
+``` 
+
+En este caso, puede interesarnos fijar las varianzas de las variables latentes, y dejar libres los parámetros lambda. Entonces tendríamos esta variante del modelo:
+
+```{r variante cuatro factores}
+fourfactor.var <- 'ac =~ NA*ac01 + ac02 + ac03 + ac04 + ac05 + ac06
+cch =~ NA*cch01 + cch02 + cch03 + cch04 + cch05 + cch06
+ccl =~ NA*ccl01 + ccl02 + ccl03
+nc =~ NA*nc01 + nc02 + nc03 + nc04 + nc05 + nc06
+
+ac ~~ 1*ac
+cch ~~ 1*cch
+ccl ~~ 1*ccl
+nc  ~~ 1*nc'
+```
+
+Y entonces podemos evaluarlo haciendo (se ha vuelto a mostrar los índices de ajuste del otro modelo):
+
+```{r ajuste variante cuatro factores}
+fourfactor.var.fit <- cfa(fourfactor.var, data = datos, likelihood="wishart")
+fitMeasures(fourfactor.fit)[ind]
+fitMeasures(fourfactor.var.fit)[ind]
+parameterEstimates(fourfactor.var.fit)
+```
+
+#CFA de foco de regulación
+
+Con el foco de regulación se actúa de manera similar al compromiso organizativo. Compararemos el modelo de un factor y el de dos factores:
+
+```{r modelos foco regulación}
+rfonefactor <- 'rffactor =~ pre01 + pre02 + pre03 + pre04 + pre05 + pre06 + pro01 + pro02 + pro03 + pro04 + pro05 + pro06'
+
+modelorf <- 'pre =~ pre01 + pre02 + pre03 + pre04 + pre05 + pre06
+pro =~ pro01 + pro02 + pro03 + pro04 + pro05 + pro06'
+```
+
+##Ajuste del modelo
+
+Ajustamos los dos modelos:
+
+```{r ajuste cfa rf}
+library(lavaan)
+
+rfonefactor.fit <- cfa(rfonefactor, data = datos, likelihood="wishart")
+modelorf.fit <- cfa(modelorf, data = datos, likelihood="wishart")
+```
+
+Y evaluamos algunos índices de ajuste:
+
+```{r ajuste rf}
+fitMeasures(rfonefactor.fit)[ind]
+fitMeasures(modelorf.fit)[ind]
+```
+
+El ajuste del modelo de dos factores tiene un ajuste mejor que el de un factor.
+
+#Foco de regulación y compromiso organizativo
+
+Ahora definiremos un modelo estructural de relaciones entre foco de regulación y compromiso:
+
+```{r rf vs co 01}
+modelo01 <- 'ac =~ ac01 + ac02 + ac03 + ac04 + ac05 + ac06
+cch =~ cch01 + cch02 + cch03 + cch04 + cch05 + cch06
+ccl =~ccl01 + ccl02 + ccl03
+nc =~ nc01 + nc02 + nc03 + nc04 + nc05 + nc06
+
+pre =~ pre01 + pre02 + pre03 + pre04 + pre05 + pre06
+pro =~ pro01 + pro02 + pro03 + pro04 + pro05 + pro06
+
+ac ~ pre + pro
+cch ~ pre +  pro
+ccl ~ pre + pro
+nc ~ pre + pro'
+```
+
+```{r ajuste modelo01}
+modelo01.fit <- sem(modelo01, data = datos, likelihood = "wishart")
+fitMeasures(modelo01.fit)[ind]
+parameterEstimates(modelo01.fit)
+```
+
+##Índices de modificación
+
+El ajuste no es demasiado bueno, así que podemos investigar los índices de modificación del modelo.
+
+```{r mi modelo 01}
+modelo01.mi <- modindices(modelo01.fit)
+modelo.mi.cov <- modelo01.mi[which(modelo01.mi$op=="~~" & modelo01.mi$mi >= 5), ]
+print(modelo.mi.cov[order(modelo.mi.cov$mi, decreasing=TRUE), ])
+```
+
+De los resultados del análisis podemos ver que el ajuste puede mejorarse algo dejando que haya correlaciones entre algunas variables observables que miden el mismo constructo:
+
+```{r rf vs co 02}
+modelo02 <- 'ac =~ ac01 + ac02 + ac03 + ac04 + ac05 + ac06
+cch =~ cch01 + cch02 + cch03 + cch04 + cch05 + cch06
+ccl =~ccl01 + ccl02 + ccl03
+nc =~ nc01 + nc02 + nc03 + nc04 + nc05 + nc06
+
+pre =~ pre01 + pre02 + pre03 + pre04 + pre05 + pre06
+pro =~ pro01 + pro02 + pro03 + pro04 + pro05 + pro06
+
+ac ~ pre + pro
+cch ~ pre +  pro
+ccl ~ pre + pro
+nc ~ pre + pro
+
+nc05 ~~ nc06
+ac04 ~~ ac05
+ac03 ~~ ac05
+pro03 ~~ pro06'
+
+modelo02.fit <- sem(modelo02, data = datos, likelihood = "wishart")
+fitMeasures(modelo01.fit)[ind]
+fitMeasures(modelo02.fit)[ind]
+parameterEstimates(modelo02.fit)
+```

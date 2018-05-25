@@ -1,0 +1,93 @@
+---
+title: 'EFA: calificaciones de estudiantes'
+author: "Jose M Sallan"
+#date: "20/1/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Datos de partida
+
+Partimos de una matriz de correlación de calificaciones de estudiantes en seis materias:
+
+```{r matriz}
+scores.cor <- matrix(c(
+1.0,  0.439,	0.410,	0.288,	0.329,	0.248,
+0.439,	1.0,	0.351,	0.354,	0.320,	0.329,
+0.410,	0.351,	1.0,	0.164,	0.190,	0.181,
+0.288,	0.354,	0.164,	1.0,	0.595,	0.470,
+0.329,	0.320,	0.190,	0.595,	1.0,	0.464,
+0.248,	0.329,	0.181,	0.470,	0.464,	1.0),
+6,	6,	byrow="TRUE")
+
+colnames(scores.cor) <- rownames(scores.cor) <- c("Gaélico", "Inglés", "Historia", "Aritmética", "Álgebra", "Geometría")
+scores.cor
+```
+
+##Análisis previos
+
+Podemos comprobar que puede realizarse un análisis factorial exploratorio realizando el test de adecuación de la muestra de Kayser-Meyer-Olkin (KMO), y comprobando que la matriz de correlaciones de población no es la identidad mediante el test de esfericidad de Bartlett:
+
+```{r prelim}
+library(psych)
+KMO(scores.cor)
+cortest.bartlett(scores.cor, n=150)
+```
+
+Los resultados del análisis indican que podemos llevar a cabo el análisis factorial.
+
+Como análisis previo, podemos representar un correlograma de la matriz de correlaciones, que nos permite analizar visualmente los datos:
+
+```{r corrplot}
+library(corrplot)
+corrplot(scores.cor, method="circle")
+```
+
+En esta matriz se aprecia una posible agrupación de las variables en dos factores: uno para asignaturas de "ciencias" (aritmética, álgebra, geometría) y de "letras" (gaélico, inglés, historia). Vamos a evaluar este posible modelo mediante un análisis factorial exploratorio extrayendo dos factores.
+
+##Definición de los modelos
+
+Definimos diversos modelos factoriales usando el paquete `psych`:
+
+* **pr.scores:** modelo de componentes principales con la función `principal`
+* **pa.scores:** modelo de ejes principales con la función pa haciendo `fm="pa"`
+* **ml.scores:** modelo de máxima verosimilitud con la función pa haciendo `fm="ml"
+
+```{r funciones}
+library(psych)
+pr.scores <- principal(r=scores.cor, nfactors=2)
+pa.scores <- fa(r=scores.cor, nfactors=2, fm="pa")
+ml.scores <- fa(r=scores.cor, nfactors=2, fm="ml")
+```
+
+##Resultados
+
+Para analizar la naturaleza de los factores, veremos las cargas factoriales en cada factor. Consideraremos las que tengan un valor mayor que 0,4.
+
+Las cargas factoriales para el modelo de componentes principales:
+
+```{r princ}
+print(pr.scores$loadings, cutoff=0.4)
+```
+
+Para el modelo de ejes principales:
+
+```{r ejes}
+print(pa.scores$loadings, cutoff=0.4)
+```
+
+Y para el modelo de máxima verosimilitud:
+
+```{r mlik}
+print(ml.scores$loadings, cutoff=0.4)
+```
+
+##Discusión de los resultados
+
+Una vez examinados los resultados, podemos realizar una interpretación de los factores a partir de las variables con carga alta en cada factor:
+
+* En los tres modelos, el análisis factorial exploratorio ha agrupado a las asignaturas de "ciencias" (aritmética, álgebra, geometría) en un factor, y a las de "letras" (gaélico, inglés, historia) en un segundo factor.
+* La proporción de variabilidad de los datos explicada por este modelo es reducida: el 64,4\% para el modelo de componentes principales y el 45,5% para los modelos de ejes principales y de máxima verosimilitud.

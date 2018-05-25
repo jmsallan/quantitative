@@ -1,0 +1,103 @@
+---
+title: 'EFA: escalas foco regulatorio'
+author: "Jose M Sallan"
+date: "21/1/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+En `datascale.csv` tenemos 150 observaciones de dos escalas de seis ítemes midiendo los focos regulatorios de promoción y prevención:
+
+* **Foco de promoción PRO:** completar tareas poniendo los medios necesarios para realizarlas con éxito (cumplir objetivos)
+* **Foco de prevención PRE:** completar tareas poniendo los medios necesarios para evitar aquello que impida su ejecución (evitar errores) 
+
+##Lectura de los datos
+
+Leemos los valores de las escalas de foco regulatorio y calculamos la matriz de correlaciones:
+
+```{r datos}
+data <- read.csv("datascale.csv")
+vars <- names(data)
+focus <- data[ ,which(grepl("pre", vars) | grepl("pro", vars))]
+cor.focus <- cor(focus)
+```
+
+##Análisis previos
+
+Calculamos los valores del test de adecuación muestral de Kayser-Meyer-Olkin (KMO), y realizamos el test de esfericidad de Bartlett:
+
+```{r KMO}
+library(psych)
+KMO(cor.focus)
+cortest.bartlett(cor.focus, n=150)
+```
+
+Los resultados indican que es posible realizar un análisis factorial, al haber correlaciones de población significativamente diferentes de cero. Para estimar el número de factores a extraer calculamos los valores propios de la matriz de correlaciones
+
+```{r}
+vp.cor.focus <- eigen(cor.focus)$values
+vp.cor.focus
+plot(1:ncol(focus), vp.cor.focus, type = "l", xlab = "", ylab = "vp")
+```
+
+El análisis de los valores propios sugiere dos modelos:
+
+* **Modelo con dos factores**, si adoptamos el criterio de considerar valores propios inferiores a uno
+* **Modelo con tres factores**, si tenemos el cuenta el cambio de pendiente en el gráfico de evolución de valores propios
+
+Analizamos los datos mediante un correlograma:
+
+```{r corrplot}
+library(corrplot)
+corrplot(cor.focus, method="circle")
+```
+
+El correlograma sugiere la existencia de dos factores: uno en el que entran todos los ítemes de prevention (pre) más el ítem `pro05`, y otro en el que carga el resto de variables.
+
+Finalmente analizaremos un modelo con dos factores.
+
+##Definición de los modelos
+
+Realizamos un análisis factorial de ejes principales, con dos factores y usando el método oblimin (definido por defecto en las funciones de análisis factorial de `psych`:
+
+```{r ejesp}
+pa.focus.oblimin <- fa(r=cor.focus, nfactors=2, fm="pa") 
+print(pa.focus.oblimin$loadings, cutoff=0.4)
+```
+
+También podemos realizar análisis de componentes principales y máxima verosimilitud:
+
+```{r}
+pr.focus.oblimin <- principal(r=cor.focus, nfactors=2)
+print(pr.focus.oblimin$loadings, cutoff=0.4)
+```
+
+```{r ml}
+ml.focus.oblimin <- fa(r=cor.focus, nfactors=2, fm="ml") 
+print(ml.focus.oblimin$loadings, cutoff=0.4)
+```
+
+En este caso, los tres modelos coinciden en confirmar los resultados previstos por el correlograma.
+
+##Discusión de los resultados
+
+Algunas observaciones de los resultados obtenidos:
+
+* El modelo con dos factores explica el 63,4% de la variabilidad de los resultados obtenidos en los modelos de ejes principales y máxima verosimilitud, y el 71,3% para el modelo de componentes principales.
+* Mientras que todos los ítemes de PRE cargan en un mismo factor, la variable correspondiente al ítem `pro05` carga en un factor diferente del resto de ítemes de foco de promoción.
+
+Estos resultados indican que la escala de foco de promoción puede ser problemática. Realizaremos un análisis de fiabilidad de las dos escalas por separado:
+
+```{r}
+pre <- data[ ,which(grepl("pre", vars))]
+pro <- data[ ,which(grepl("pro", vars))]
+alpha(pre)
+alpha(pro)
+```
+
+Del examen de los datos, se obtiene que las dos escalas tienen buenos valores de fiabilidad. En todo caso, la eliminación de `pro05` no modificaría la fiabilidad, aunque tampoco la aumentaría.
+
+Más sobre análisis de fiabilidad en [este enlace](https://rpubs.com/hauselin/reliabilityanalysis)

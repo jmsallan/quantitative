@@ -1,0 +1,77 @@
+---
+title: "Regresión logística"
+author: "Jose M Sallan"
+date: "24 de enero de 2018"
+# output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Modelos lineales generalizados para variables binarias
+
+En el caso que la variable dependiente sea dicotómica, esto es, que adopta los valores 0 o 1, tenemos disponibles dos modelos lineales generalizados:
+
+* **Modelos logit** en los que la función de enlace es la función logśitica
+* **Modelos probit* en los que la función de enlace es la función normal
+
+No hay razones de orden teórico para preferir uno a otro, y para datos lo bastante consistentes dan resultados similares.
+
+##El caso `SwissLabor`
+
+Los datos `SwissLabor` están incorporados a la librería `AER`y recogen información sobre una encuesta de salud laboral en Suiza en 1981.
+
+```{r, message=FALSE}
+library(AER)
+data("SwissLabor")
+str(SwissLabor)
+head(SwissLabor)
+```
+
+La variable dependiente en este caso es `participation`, codificada como un factor de dos niveles.
+
+##Estimación del modelo logit
+
+Vamos a estimar una regresión logit para este modelo, en el que incorporamos todas las variables explicativas, más el cuadrado de la edad:
+
+```{r}
+swiss.logit <- glm(participation ~ . + I(age^2), family="binomial", data=SwissLabor)
+```
+
+El resultado del modelo es:
+
+```{r}
+summary(swiss.logit)
+```
+
+Además del output del modelo, podemos evaluar su ajuste haciendo un test del ratio de la log likelihood:
+
+```{r}
+library(lmtest)
+lrtest(swiss.logit)
+```
+
+Alternativamente, podemos realizar el test de wald con la función `waldtest` de `lmtest`:
+
+```{r}
+waldtest(swiss.logit)
+```
+
+En los dos test se compara el poder explicativo del modelo especificado con el modelo nulo, que no tiene ninguna variable dependiente incorporada. Ambos test coinciden en determinar que el modelo tiene mayor poder explicativo que la media para explicar la variabilidad de la variable dependiente.
+
+Es frecuente indicar un indicador similar al coeficiente de determinación, el pseudo-R2. Podemos calcularlo directamente a través de la definición del modelo. Para ello, hemos evaluar el modelo nulo:
+
+```{r}
+swiss.logit02 <- update(swiss.logit, . ~ 1)
+pr2.swissl.logit <- 1 - as.vector(logLik(swiss.logit)/logLik(swiss.logit02))
+pr2.swissl.logit
+```
+
+Podemos tener más indicadores usando el paquete `pscl`:
+
+```{r}
+library(pscl)
+pR2(swiss.logit)
+```
+
